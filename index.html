@@ -667,23 +667,20 @@ async function loadTopic() {
 
   try {
     const res = await fetch(
-      'https://openrouter.ai/api/v1/chat/completions',
+      'https://api.anthropic.com/v1/messages',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-          'HTTP-Referer': 'https://totomg5252-creator.github.io',
-          'X-Title': 'Financial Navigator'
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
         },
         body: JSON.stringify({
-          model: 'meta-llama/llama-3.3-70b-instruct:free',
-          messages: [
-            { role: 'system', content: getSystemPrompt() },
-            { role: 'user', content: buildPrompt(topic) }
-          ],
+          model: 'claude-haiku-4-5-20251001',
           max_tokens: currentMode === 'quick' ? 1200 : 2500,
-          temperature: 0.7
+          system: getSystemPrompt(),
+          messages: [{ role: 'user', content: buildPrompt(topic) }]
         })
       }
     );
@@ -695,7 +692,7 @@ async function loadTopic() {
     }
 
     const data = await res.json();
-    const text = data.choices?.[0]?.message?.content || '';
+    const text = data.content?.[0]?.text || '';
     const clean = text.replace(/^```html\n?/i, '').replace(/\n?```$/i, '').trim();
     renderLesson(clean, topic);
   } catch (e) {
@@ -832,7 +829,7 @@ function saveApiKey() {
     return;
   }
   apiKey = val;
-  localStorage.setItem('fn_openrouter_key', apiKey);
+  localStorage.setItem('fn_claude_key', apiKey);
   setKeyStatus('ok', '已儲存');
 }
 
