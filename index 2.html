@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>金融導航員 Financial Navigator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0d0d0d;
+  --bg2: #141414;
+  --bg3: #1c1c1c;
+  --bg4: #242424;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #f0ede8;
+  --text2: #9a9690;
+  --text3: #52504e;
+  --accent: #c9a96e;
+  --accent2: #e8c87a;
+  --accent-dim: rgba(201,169,110,0.1);
+  --green: #5a9e78;
+  --red: #c25f5f;
+  --blue: #5b8fc9;
+  --sidebar-w: 265px;
+  --topbar-h: 56px;
+  --font-serif: 'Noto Serif TC', serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+
+html { font-size: 16px; scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  display: flex;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  background: var(--bg2);
+  border-right: 0.5px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 100;
+  overflow-y: auto;
+  transition: transform 0.25s ease;
+}
+.sidebar-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 20px 18px 16px;
+  border-bottom: 0.5px solid var(--border);
+  flex-shrink: 0;
+}
+.logo-mark {
+  width: 34px; height: 34px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 12px; font-weight: 500;
+  color: #0d0d0d; flex-shrink: 0;
+}
+.logo-en { font-size: 10px; color: var(--text2); letter-spacing: 0.07em; text-transform: uppercase; }
+.logo-zh { font-size: 14px; font-weight: 500; color: var(--text); font-family: var(--font-serif); }
+
+.phase-group { padding: 12px 0 4px; }
+.phase-title {
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text3); padding: 0 18px 6px;
+}
+.module-nav { display: flex; flex-direction: column; gap: 1px; padding: 0 8px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: var(--radius);
+  cursor: pointer; transition: background 0.1s;
+  border: none; background: transparent; width: 100%;
+  text-align: left; color: var(--text2);
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--accent-dim); color: var(--accent); }
+.nav-num { font-family: var(--font-mono); font-size: 10px; color: var(--text3); min-width: 16px; }
+.nav-item.active .nav-num { color: var(--accent); opacity: 0.6; }
+.nav-label { font-size: 13px; line-height: 1.3; flex: 1; }
+.nav-check { font-size: 11px; color: var(--green); opacity: 0; transition: opacity 0.2s; }
+.nav-item.done .nav-check { opacity: 1; }
+
+.sidebar-bottom {
+  margin-top: auto; padding: 14px 14px 18px;
+  border-top: 0.5px solid var(--border); flex-shrink: 0;
+}
+.api-label { font-size: 10px; color: var(--text3); margin-bottom: 6px; letter-spacing: 0.06em; text-transform: uppercase; }
+.api-row { display: flex; gap: 6px; }
+.api-row input {
+  flex: 1; background: var(--bg3);
+  border: 0.5px solid var(--border2);
+  border-radius: var(--radius); color: var(--text);
+  font-size: 12px; padding: 6px 10px;
+  font-family: var(--font-mono); outline: none;
+}
+.api-row input:focus { border-color: var(--accent); }
+.api-row button {
+  background: var(--accent-dim); border: 0.5px solid var(--accent);
+  color: var(--accent); border-radius: var(--radius);
+  padding: 6px 12px; font-size: 12px;
+  cursor: pointer; white-space: nowrap;
+  font-family: var(--font-sans);
+}
+.api-row button:hover { background: rgba(201,169,110,0.18); }
+.key-status { font-size: 11px; margin-top: 6px; min-height: 14px; }
+.key-status.ok { color: var(--green); }
+.key-status.err { color: var(--red); }
+
+/* ── MAIN ── */
+.main-content {
+  margin-left: var(--sidebar-w);
+  flex: 1; display: flex; flex-direction: column; min-height: 100vh;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: var(--topbar-h);
+  border-bottom: 0.5px solid var(--border);
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 32px; background: var(--bg2);
+  position: sticky; top: 0; z-index: 50; flex-shrink: 0;
+}
+.menu-btn {
+  display: none; background: none; border: none;
+  color: var(--text2); font-size: 20px; cursor: pointer; padding: 4px;
+}
+.topbar-crumb { flex: 1; font-size: 13px; color: var(--text2); }
+.mode-toggle {
+  display: flex; background: var(--bg3);
+  border: 0.5px solid var(--border); border-radius: var(--radius); padding: 3px; gap: 2px;
+}
+.mode-btn {
+  background: transparent; border: none; color: var(--text2);
+  font-size: 12px; padding: 4px 14px; border-radius: 6px;
+  cursor: pointer; transition: all 0.12s; font-family: var(--font-sans);
+}
+.mode-btn.active { background: var(--accent-dim); color: var(--accent); }
+
+/* ── HOME ── */
+.home-screen { padding: 56px 40px; max-width: 960px; }
+.home-eyebrow {
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 14px; font-family: var(--font-mono);
+}
+.home-title {
+  font-family: var(--font-serif); font-size: 44px;
+  font-weight: 500; line-height: 1.2; color: var(--text);
+  margin-bottom: 16px;
+}
+.home-desc { font-size: 15px; color: var(--text2); max-width: 520px; line-height: 1.75; margin-bottom: 48px; }
+
+.phase-section { margin-bottom: 36px; }
+.phase-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 12px;
+}
+.phase-num {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--text3); letter-spacing: 0.1em;
+}
+.phase-name { font-size: 12px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
+.phase-line { flex: 1; height: 0.5px; background: var(--border); }
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+}
+.module-card {
+  background: var(--bg2); border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  position: relative;
+}
+.module-card:hover { border-color: var(--border2); background: var(--bg3); }
+.module-card.done { border-color: rgba(90,158,120,0.25); }
+.card-num { font-family: var(--font-mono); font-size: 10px; color: var(--text3); margin-bottom: 8px; }
+.card-name { font-size: 14px; font-weight: 500; color: var(--text); font-family: var(--font-serif); margin-bottom: 5px; line-height: 1.3; }
+.card-tag { font-size: 11px; color: var(--text3); line-height: 1.4; }
+.card-done { position: absolute; top: 12px; right: 12px; font-size: 11px; color: var(--green); }
+
+.home-hint { margin-top: 8px; font-size: 13px; color: var(--text3); display: flex; align-items: center; gap: 8px; }
+.hint-arrow { color: var(--accent); }
+
+/* ── LESSON ── */
+.lesson-screen { padding: 48px 40px; max-width: 760px; flex: 1; display: flex; flex-direction: column; }
+.lesson-eyebrow {
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--accent); font-family: var(--font-mono); margin-bottom: 10px;
+}
+.lesson-title {
+  font-family: var(--font-serif); font-size: 30px;
+  font-weight: 500; color: var(--text); line-height: 1.25; margin-bottom: 8px;
+}
+.lesson-meta { font-size: 12px; color: var(--text3); padding-bottom: 28px; border-bottom: 0.5px solid var(--border); margin-bottom: 32px; }
+
+/* Loading */
+.loading-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 80px 0; gap: 14px;
+}
+.spinner {
+  width: 26px; height: 26px;
+  border: 1.5px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: var(--text2); }
+.loading-sub { font-size: 12px; color: var(--text3); }
+
+/* Content blocks */
+.lesson-content { display: none; animation: fadeIn 0.3s ease; }
+.lesson-content.visible { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.content-block { margin-bottom: 28px; }
+.block-label {
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text3); font-family: var(--font-mono); margin-bottom: 10px;
+}
+.block-title {
+  font-family: var(--font-serif); font-size: 18px;
+  font-weight: 500; color: var(--text); margin-bottom: 10px;
+}
+.block-body { font-size: 15px; color: var(--text2); line-height: 1.8; }
+.block-body p { margin-bottom: 12px; }
+.block-body p:last-child { margin-bottom: 0; }
+.block-body strong { color: var(--text); font-weight: 500; }
+
+.quote-block {
+  border-left: 2px solid var(--accent);
+  padding: 14px 18px;
+  background: rgba(201,169,110,0.05);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 20px 0;
+}
+.quote-text { font-size: 15px; color: var(--text); font-family: var(--font-serif); line-height: 1.6; margin-bottom: 6px; }
+.quote-source { font-size: 11px; color: var(--accent); font-family: var(--font-mono); }
+
+.concept-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px; margin: 16px 0;
+}
+.concept-item {
+  background: var(--bg3); border: 0.5px solid var(--border);
+  border-radius: var(--radius); padding: 14px;
+}
+.concept-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 5px; }
+.concept-desc { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+.think-box {
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-lg); padding: 20px;
+  margin: 24px 0;
+}
+.think-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); font-family: var(--font-mono); margin-bottom: 10px; }
+.think-q { font-size: 16px; color: var(--text); font-family: var(--font-serif); line-height: 1.5; }
+
+.case-box {
+  background: var(--bg3); border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px 20px; margin: 20px 0;
+}
+.case-tag { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--blue); font-family: var(--font-mono); margin-bottom: 8px; }
+.case-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+.case-body { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+.divider { height: 0.5px; background: var(--border); margin: 28px 0; }
+
+/* Lesson footer */
+.lesson-footer {
+  margin-top: auto; padding-top: 24px;
+  border-top: 0.5px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+}
+.lesson-actions { display: flex; gap: 10px; }
+.btn {
+  font-size: 13px; padding: 9px 20px;
+  border-radius: var(--radius); cursor: pointer;
+  font-family: var(--font-sans); transition: all 0.12s; border: none;
+}
+.btn-secondary {
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  color: var(--text2);
+}
+.btn-secondary:hover { color: var(--text); border-color: var(--text3); }
+.btn-primary {
+  background: var(--accent-dim); border: 0.5px solid var(--accent);
+  color: var(--accent);
+}
+.btn-primary:hover { background: rgba(201,169,110,0.18); }
+.btn-mark {
+  background: transparent; border: 0.5px solid rgba(90,158,120,0.4);
+  color: var(--green);
+}
+.btn-mark:hover { background: rgba(90,158,120,0.1); }
+
+.topic-dots { display: flex; gap: 6px; align-items: center; }
+.dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--border2); transition: background 0.15s;
+}
+.dot.active { background: var(--accent); }
+.dot.done { background: var(--green); }
+
+/* ── OVERLAY (mobile) ── */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 90;
+}
+.overlay.visible { display: block; }
+
+/* ── UTILITIES ── */
+.hidden { display: none !important; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; }
+  .menu-btn { display: block; }
+  .topbar { padding: 0 16px; }
+  .home-screen { padding: 32px 20px; }
+  .home-title { font-size: 32px; }
+  .lesson-screen { padding: 28px 20px; }
+  .cards-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-mark">FN</div>
+      <div class="logo-text">
+        <div class="logo-en">Financial Navigator</div>
+        <div class="logo-zh">金融導航員</div>
+      </div>
+    </div>
+    <div id="module-nav"></div>
+    <div class="sidebar-bottom">
+      <div class="api-label">Gemini API Key</div>
+      <div class="api-row">
+        <input type="password" id="api-key-input" placeholder="在此貼上 Gemini API Key" />
+        <button onclick="saveApiKey()">儲存</button>
+      </div>
+      <div class="key-status" id="key-status"></div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar">
+      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-crumb" id="topbar-crumb">選擇模塊開始學習</div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="mode-quick" onclick="setMode('quick')">精華</button>
+        <button class="mode-btn" id="mode-deep" onclick="setMode('deep')">深度</button>
+      </div>
+    </div>
+
+    <div class="home-screen" id="home-screen">
+      <div class="home-eyebrow">Financial Navigator · 金融導航員</div>
+      <h1 class="home-title">建立真正的<br>投資思維體系</h1>
+      <p class="home-desc">十二個模塊，從金融基礎到全球宏觀視野。涵蓋各大投資流派、風險控管、行為心理學。每個主題由 AI 根據你的模式即時生成。</p>
+      <div id="modules-overview"></div>
+      <div class="home-hint"><span class="hint-arrow">→</span> 點擊任一模塊開始，上方可切換精華／深度模式</div>
+    </div>
+
+    <div class="lesson-screen hidden" id="lesson-screen">
+      <div class="lesson-eyebrow" id="lesson-eyebrow"></div>
+      <h2 class="lesson-title" id="lesson-title"></h2>
+      <div class="lesson-meta" id="lesson-meta"></div>
+      <div class="lesson-body">
+        <div class="loading-state" id="loading-state">
+          <div class="spinner"></div>
+          <div class="loading-text" id="loading-text">正在生成課程內容...</div>
+          <div class="loading-sub">AI 根據你的學習模式客製化內容</div>
+        </div>
+        <div class="lesson-content" id="lesson-content"></div>
+      </div>
+      <div class="lesson-footer">
+        <div class="lesson-actions">
+          <button class="btn btn-secondary" onclick="renderHome()">← 首頁</button>
+          <button class="btn btn-secondary" onclick="regenerate()">重新生成</button>
+          <button class="btn btn-primary" onclick="nextTopic()">下一主題 →</button>
+        </div>
+        <div class="topic-dots" id="topic-dots"></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+  <script>
+const PHASES = [
+  {
+    phase: "第一階段",
+    name: "地基",
+    modules: [
+      {
+        id: 1,
+        name: "金融市場基礎",
+        tag: "股票 · 債券 · 期貨 · 選擇權",
+        topics: ["什麼是股票與所有權", "債券怎麼運作", "期貨合約的邏輯", "選擇權入門", "市場參與者有哪些", "做多與做空"],
+        masters: ["基礎概念，不分流派"],
+        desc: "理解市場的共同語言。所有投資流派都建立在這個地基上。"
+      },
+      {
+        id: 2,
+        name: "總體經濟框架",
+        tag: "利率 · 通膨 · 景氣循環",
+        topics: ["利率與貨幣政策", "通膨是什麼", "景氣循環四個階段", "殖利率曲線", "外匯與資本流動", "PMI等領先指標"],
+        masters: ["達利歐", "索羅斯", "葛林斯潘"],
+        desc: "市場是經濟的倒影。看懂總經，你才知道現在在哪個位置。"
+      },
+      {
+        id: 3,
+        name: "財報閱讀",
+        tag: "損益表 · 資產負債 · 現金流",
+        topics: ["損益表三行邏輯", "資產負債表結構", "自由現金流FCF", "ROE與ROIC", "毛利率與淨利率", "財報造假訊號"],
+        masters: ["巴菲特", "段永平", "彼得林區"],
+        desc: "財報是公司說的話。數字背後才是真相。"
+      }
+    ]
+  },
+  {
+    phase: "第二階段",
+    name: "思想流派",
+    modules: [
+      {
+        id: 4,
+        name: "各流派投資思想",
+        tag: "價值 · 成長 · 技術 · 量化",
+        topics: ["價值投資核心邏輯", "成長投資框架", "技術分析基礎", "總經驅動型操作", "量化交易思維", "各流派適用條件"],
+        masters: ["巴菲特", "費雪", "段永平", "達利歐", "索羅斯", "西蒙斯"],
+        desc: "市場上有很多種對的方法，但每種都有適用條件。"
+      },
+      {
+        id: 5,
+        name: "產業與公司分析",
+        tag: "護城河 · 商業模式 · 競爭結構",
+        topics: ["五力分析框架", "護城河五種類型", "商業模式拆解", "產業週期位置", "台積電案例", "亞馬遜案例"],
+        masters: ["巴菲特", "段永平", "莫尼什·帕伯萊"],
+        desc: "同樣是科技股，台積電和新創完全不同。學會看清楚一家公司。"
+      },
+      {
+        id: 6,
+        name: "金融歷史與週期",
+        tag: "危機 · 泡沫 · 歷史對照當下",
+        topics: ["1929大蕭條", "1997亞洲金融風暴", "2000網路泡沫", "2008房貸危機", "泡沫形成的共同結構", "週期底部的共同訊號"],
+        masters: ["達利歐", "坦伯頓", "霍華·馬克斯"],
+        desc: "歷史不會完全重演，但會押韻。學會看懂歷史，才能在當下找座標。"
+      }
+    ]
+  },
+  {
+    phase: "第三階段",
+    name: "執行與控管",
+    modules: [
+      {
+        id: 7,
+        name: "風險控管",
+        tag: "倉位 · 凱利公式 · 下行保護",
+        topics: ["倉位管理原則", "凱利公式計算", "最大回撤控制", "集中vs分散", "黑天鵝準備", "不同流派的風控差異"],
+        masters: ["巴菲特", "塔雷伯", "霍華·馬克斯"],
+        desc: "不虧損比賺大錢更重要。這是複利的基礎，不是保守主義。"
+      },
+      {
+        id: 8,
+        name: "資產配置",
+        tag: "股債 · REITs · 全天候組合",
+        topics: ["股債配置邏輯", "全天候組合", "REITs基礎", "黃金的角色", "再平衡時機", "跨市場配置"],
+        masters: ["達利歐", "約翰·柏格", "大衛·史雲生"],
+        desc: "選股只是一部分。組合配置做對，比選到好股更穩定。"
+      },
+      {
+        id: 9,
+        name: "複利思維",
+        tag: "時間 · 再投資 · 滾雪球邏輯",
+        topics: ["72法則", "時間與報酬率關係", "不虧損的複利邏輯", "再投資效應", "滾雪球公司特徵", "複利思維應用選股"],
+        masters: ["巴菲特", "查理·蒙格", "段永平"],
+        desc: "巴菲特93%的財富在60歲後累積。複利的關鍵不只是報酬率。"
+      },
+      {
+        id: 10,
+        name: "稅務與法規",
+        tag: "台灣 · 跨市場 · 稅後報酬",
+        topics: ["證交稅計算", "股利所得課稅", "期貨稅制差異", "跨市場稅務", "境外所得申報", "合法節稅策略"],
+        masters: ["台灣法規", "跨市場實務"],
+        desc: "賺到的錢不是你的，稅後才是。算清楚才知道真實報酬。"
+      }
+    ]
+  },
+  {
+    phase: "第四階段",
+    name: "心智與全球視野",
+    modules: [
+      {
+        id: 11,
+        name: "心態與行為偏誤",
+        tag: "確認偏誤 · 錨定 · 損失厭惡",
+        topics: ["確認偏誤", "錨定效應", "損失厭惡", "處置效應", "過度自信", "羊群效應", "建立決策系統"],
+        masters: ["卡尼曼", "塔勒", "查理·蒙格"],
+        desc: "你不知道自己在犯的錯才是最危險的。了解偏誤才能繞過它。"
+      },
+      {
+        id: 12,
+        name: "全球宏觀與地緣政治",
+        tag: "跨市場 · 國際視野 · 坡度判斷",
+        topics: ["美元週期", "地緣政治對市場的影響", "新興市場邏輯", "全球資金流向追蹤", "台灣在全球供應鏈的角色", "跨市場機會判斷"],
+        masters: ["索羅斯", "達利歐", "坦伯頓"],
+        desc: "雪球不必只在本地滾。找到當下全球市場最有利的坡度。"
+      }
+    ]
+  }
+];
+
+const ALL_MODULES = PHASES.flatMap(p => p.modules);
+
+// ── STATE ──
+let currentModule = null;
+let currentTopicIdx = 0;
+let currentMode = 'quick';
+let apiKey = localStorage.getItem('fn_gemini_key') || '';
+let progress = JSON.parse(localStorage.getItem('fn_progress') || '{}');
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  renderSidebar();
+  renderHome();
+  if (apiKey) {
+    document.getElementById('api-key-input').value = apiKey;
+    setKeyStatus('ok', 'API Key 已設定');
+  }
+});
+
+// ── SIDEBAR ──
+function renderSidebar() {
+  const nav = document.getElementById('module-nav');
+  nav.innerHTML = '';
+  PHASES.forEach(phase => {
+    const phaseDiv = document.createElement('div');
+    phaseDiv.className = 'phase-group';
+    phaseDiv.innerHTML = `<div class="phase-title">${phase.phase} — ${phase.name}</div>`;
+    phase.modules.forEach(mod => {
+      const item = document.createElement('button');
+      item.className = 'nav-item' +
+        (progress[mod.id] ? ' done' : '') +
+        (currentModule?.id === mod.id ? ' active' : '');
+      item.innerHTML = `
+        <span class="nav-num">${String(mod.id).padStart(2,'0')}</span>
+        <span class="nav-label">${mod.name}</span>
+        <span class="nav-check">✓</span>
+      `;
+      item.onclick = () => openModule(mod);
+      phaseDiv.appendChild(item);
+    });
+    nav.appendChild(phaseDiv);
+  });
+}
+
+// ── HOME ──
+function renderHome() {
+  const container = document.getElementById('modules-overview');
+  container.innerHTML = '';
+  PHASES.forEach(phase => {
+    const section = document.createElement('div');
+    section.className = 'phase-section';
+    section.innerHTML = `
+      <div class="phase-header">
+        <span class="phase-num">${phase.phase}</span>
+        <span class="phase-name">${phase.name}</span>
+        <div class="phase-line"></div>
+      </div>`;
+    const grid = document.createElement('div');
+    grid.className = 'cards-grid';
+    phase.modules.forEach(mod => {
+      const card = document.createElement('div');
+      card.className = 'module-card' + (progress[mod.id] ? ' done' : '');
+      card.innerHTML = `
+        <div class="card-num">${String(mod.id).padStart(2,'0')}</div>
+        <div class="card-name">${mod.name}</div>
+        <div class="card-tag">${mod.tag}</div>
+        ${progress[mod.id] ? '<div class="card-done">✓ 完成</div>' : ''}
+      `;
+      card.onclick = () => openModule(mod);
+      grid.appendChild(card);
+    });
+    section.appendChild(grid);
+    container.appendChild(section);
+  });
+  document.getElementById('home-screen').classList.remove('hidden');
+  document.getElementById('lesson-screen').classList.add('hidden');
+  document.getElementById('topbar-crumb').textContent = '選擇模塊開始學習';
+}
+
+// ── OPEN MODULE ──
+function openModule(mod) {
+  currentModule = mod;
+  currentTopicIdx = 0;
+  document.getElementById('home-screen').classList.add('hidden');
+  document.getElementById('lesson-screen').classList.remove('hidden');
+  document.getElementById('lesson-eyebrow').textContent =
+    `模塊 ${String(mod.id).padStart(2,'0')} — ${PHASES.find(p => p.modules.includes(mod))?.name}`;
+  document.getElementById('lesson-title').textContent = mod.name;
+  document.getElementById('lesson-meta').textContent =
+    `${mod.topics.length} 個主題 · ${currentMode === 'quick' ? '精華模式' : '深度模式'}`;
+  document.getElementById('topbar-crumb').textContent = mod.name;
+  renderTopicDots();
+  updateNavActive();
+  loadTopic();
+  if (window.innerWidth < 768) closeSidebar();
+}
+
+// ── DOTS ──
+function renderTopicDots() {
+  const container = document.getElementById('topic-dots');
+  container.innerHTML = '';
+  currentModule.topics.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === currentTopicIdx ? ' active' : '');
+    container.appendChild(dot);
+  });
+}
+
+function updateDots() {
+  const dots = document.querySelectorAll('.dot');
+  dots.forEach((d, i) => {
+    d.className = 'dot' +
+      (i < currentTopicIdx ? ' done' : '') +
+      (i === currentTopicIdx ? ' active' : '');
+  });
+}
+
+// ── LOAD TOPIC ──
+async function loadTopic() {
+  const topic = currentModule.topics[currentTopicIdx];
+  document.getElementById('loading-state').style.display = 'flex';
+  document.getElementById('lesson-content').classList.remove('visible');
+  document.getElementById('loading-text').textContent = `正在生成：${topic}`;
+  updateDots();
+
+  if (!apiKey) {
+    showError('請先在左側輸入 Gemini API Key');
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: getSystemPrompt() + '\n\n' + buildPrompt(topic) }] }],
+          generationConfig: {
+            maxOutputTokens: currentMode === 'quick' ? 1200 : 2500,
+            temperature: 0.7
+          }
+        })
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.json();
+      showError(`API 錯誤：${err.error?.message || res.status}`);
+      return;
+    }
+
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const clean = text.replace(/^```html\n?/i, '').replace(/\n?```$/i, '').trim();
+    renderLesson(clean, topic);
+  } catch (e) {
+    showError(`連線失敗：${e.message}`);
+  }
+}
+
+// ── PROMPTS ──
+function getSystemPrompt() {
+  return `你是一位金融教育導師，專門幫助完全沒有金融背景的人建立完整的投資思維體系。
+
+教學風格：
+- 使用流暢的繁體中文
+- 術語立即解釋，用真實例子讓概念具體
+- 結合巴菲特、段永平、達利歐、彼得林區等大師觀點
+- 培養獨立判斷力，不灌輸單一思維
+
+只輸出以下格式的 HTML，不要加任何 markdown 標記或 \`\`\`：
+
+<div class="content-block">
+  <div class="block-label">核心概念</div>
+  <div class="block-title">標題</div>
+  <div class="block-body"><p>內容...</p></div>
+</div>
+
+<div class="quote-block">
+  <div class="quote-text">名言或關鍵觀點</div>
+  <div class="quote-source">— 人名</div>
+</div>
+
+<div class="concept-grid">
+  <div class="concept-item">
+    <div class="concept-title">概念名稱</div>
+    <div class="concept-desc">簡短說明</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="case-box">
+  <div class="case-tag">真實案例</div>
+  <div class="case-title">案例標題</div>
+  <div class="case-body">案例說明</div>
+</div>
+
+<div class="think-box">
+  <div class="think-label">今日思考題</div>
+  <div class="think-q">幫助內化的問題</div>
+</div>`;
+}
+
+function buildPrompt(topic) {
+  const isQuick = currentMode === 'quick';
+  return `學習模塊：${currentModule.name}
+當前主題：${topic}
+相關大師：${currentModule.masters.join('、')}
+模式：${isQuick ? '精華模式（5分鐘可讀完，核心概念+1個案例+1個思考題）' : '深度模式（完整版，多個面向、歷史案例、大師對比觀點、實際應用）'}
+
+學習者背景：完全沒有金融背景，有學習意願和批判思考能力。
+請針對「${topic}」生成課程內容。要求具體、有深度、結合真實案例。`;
+}
+
+// ── RENDER ──
+function renderLesson(html, topic) {
+  document.getElementById('loading-state').style.display = 'none';
+  const content = document.getElementById('lesson-content');
+  content.innerHTML = html;
+  content.classList.add('visible');
+  document.getElementById('lesson-meta').textContent =
+    `主題 ${currentTopicIdx + 1} / ${currentModule.topics.length}：${topic} · ${currentMode === 'quick' ? '精華' : '深度'}模式`;
+}
+
+function showError(msg) {
+  document.getElementById('loading-state').style.display = 'none';
+  const content = document.getElementById('lesson-content');
+  content.innerHTML = `
+    <div style="padding:40px 0;text-align:center;">
+      <div style="font-size:13px;color:var(--red);margin-bottom:8px;">${msg}</div>
+      <button class="btn btn-secondary" onclick="loadTopic()" style="margin-top:12px;">重試</button>
+    </div>`;
+  content.classList.add('visible');
+}
+
+// ── NAVIGATION ──
+function nextTopic() {
+  if (!currentModule) return;
+  if (currentTopicIdx < currentModule.topics.length - 1) {
+    currentTopicIdx++;
+    loadTopic();
+  } else {
+    markDone();
+  }
+}
+
+function markDone() {
+  if (!currentModule) return;
+  progress[currentModule.id] = true;
+  localStorage.setItem('fn_progress', JSON.stringify(progress));
+  renderSidebar();
+  updateNavActive();
+  const content = document.getElementById('lesson-content');
+  content.innerHTML += `
+    <div class="divider"></div>
+    <div class="think-box" style="border-color:rgba(90,158,120,0.3);text-align:center;">
+      <div class="think-label" style="color:var(--green);">模塊完成</div>
+      <div class="think-q" style="font-size:14px;color:var(--text2);">
+        你已完成「${currentModule.name}」的所有主題。
+      </div>
+      <button class="btn btn-primary" onclick="renderHome()" style="margin-top:14px;">回首頁</button>
+    </div>`;
+}
+
+function regenerate() { loadTopic(); }
+
+function updateNavActive() {
+  document.querySelectorAll('.nav-item').forEach((el, i) => {
+    el.classList.toggle('active', ALL_MODULES[i]?.id === currentModule?.id);
+  });
+}
+
+// ── MODE ──
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('mode-quick').classList.toggle('active', mode === 'quick');
+  document.getElementById('mode-deep').classList.toggle('active', mode === 'deep');
+  if (currentModule) loadTopic();
+}
+
+// ── API KEY ──
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val) {
+    setKeyStatus('err', '請輸入 API Key');
+    return;
+  }
+  apiKey = val;
+  localStorage.setItem('fn_gemini_key', apiKey);
+  setKeyStatus('ok', '已儲存');
+}
+
+function setKeyStatus(type, msg) {
+  const el = document.getElementById('key-status');
+  el.textContent = msg;
+  el.className = 'key-status ' + type;
+}
+
+// ── SIDEBAR TOGGLE ──
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('visible');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('visible');
+}
+  </script>
+</body>
+</html>
