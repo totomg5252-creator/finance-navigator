@@ -349,6 +349,17 @@ body {
 </head>
 <body>
 
+<div id="key-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#1a1a1a;border:0.5px solid rgba(255,255,255,0.12);border-radius:16px;padding:32px;max-width:420px;width:90%;">
+    <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c9a96e;margin-bottom:12px;font-family:monospace;">Financial Navigator</div>
+    <div style="font-size:20px;font-weight:500;color:#f0ede8;margin-bottom:8px;font-family:'Noto Serif TC',serif;">輸入 API Key</div>
+    <div style="font-size:13px;color:#9a9690;margin-bottom:20px;line-height:1.6;">貼上你的 Claude API Key，儲存後永久記住，不需要再輸入。</div>
+    <input id="modal-key-input" type="password" placeholder="sk-ant-api03-..." style="width:100%;background:#111;border:0.5px solid rgba(255,255,255,0.15);border-radius:8px;color:#f0ede8;font-size:13px;padding:10px 14px;font-family:monospace;outline:none;margin-bottom:12px;box-sizing:border-box;" />
+    <button onclick="saveModalKey()" style="width:100%;background:rgba(201,169,110,0.15);border:0.5px solid #c9a96e;color:#c9a96e;border-radius:8px;padding:11px;font-size:14px;cursor:pointer;font-family:sans-serif;">儲存並開始學習</button>
+  </div>
+</div>
+
+
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="logo-mark">FN</div>
@@ -541,7 +552,7 @@ const ALL_MODULES = PHASES.flatMap(p => p.modules);
 let currentModule = null;
 let currentTopicIdx = 0;
 let currentMode = 'quick';
-let apiKey = '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';
+let apiKey = localStorage.getItem('fn_claude_key') || '';
 let progress = JSON.parse(localStorage.getItem('fn_progress') || '{}');
 
 // ── INIT ──
@@ -849,5 +860,27 @@ function closeSidebar() {
   document.getElementById('overlay').classList.remove('visible');
 }
   </script>
+
+<script>
+function showKeyModal() {
+  const stored = localStorage.getItem('fn_claude_key');
+  if (!stored) {
+    document.getElementById('key-modal').style.display = 'flex';
+  }
+}
+
+function saveModalKey() {
+  const val = document.getElementById('modal-key-input').value.trim();
+  if (!val) { alert('請輸入 API Key'); return; }
+  localStorage.setItem('fn_claude_key', val);
+  apiKey = val;
+  document.getElementById('key-modal').style.display = 'none';
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(showKeyModal, 500);
+});
+</script>
+
 </body>
 </html>
